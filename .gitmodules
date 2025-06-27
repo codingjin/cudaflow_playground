@@ -1,0 +1,3 @@
+[submodule "taskflow"]
+	path = taskflow
+	url = git@github.com:taskflow/taskflow.git
