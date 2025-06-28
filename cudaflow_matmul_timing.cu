@@ -135,6 +135,9 @@ int main() {
         tf::cudaGraphExec exec(cg);
         stream.run(exec).synchronize();
     }).name("cudaFlow");
+
+    // warm-up
+    executor.run(taskflow).wait();
     
     auto gbeg = std::chrono::steady_clock::now();
     // Timing for 1000 rounds

@@ -116,6 +116,18 @@ int main() {
     cudaMemcpy(db, &hb[0], hb.size() * sizeof(float), cudaMemcpyHostToDevice);
     cudaDeviceSynchronize();
 
+    // warm-up
+    matmul0<<<grid, block>>>(da, db, dc, N, N, N);
+    cudaDeviceSynchronize();
+    matmul1<<<grid, block>>>(da, db, dc, N, N, N);
+    cudaDeviceSynchronize();
+    matmul2<<<grid, block>>>(da, db, dc, N, N, N);
+    cudaDeviceSynchronize();
+    matmul3<<<grid, block>>>(da, db, dc, N, N, N);
+    cudaDeviceSynchronize();
+    matmul<<<grid, block>>>(da, db, dc, N, N, N);
+    cudaDeviceSynchronize();
+
     auto gbeg = std::chrono::steady_clock::now();
     // Timing for 1000 rounds
     for (int i = 0; i < 5000; ++i) {
