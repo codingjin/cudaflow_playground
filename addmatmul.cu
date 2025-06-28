@@ -8,9 +8,6 @@
 #include <cmath>
 #include <algorithm>
 
-// C = A + B
-// E = C * D
-
 // Kernel: add
 __global__ void add(const int n, const float *x, const float *y, float *z) {
     int idx = blockIdx.x*blockDim.x + threadIdx.x;
@@ -33,7 +30,7 @@ __global__ void matmul(const float* A, const float* B, float* C, int M, int N, i
 }
 
 int main() {
-    const unsigned N = 1173;
+    const unsigned N = 537;
     const unsigned N2 = N * N;
     const unsigned RANDOM_SEED = 137;
     std::mt19937 gen(RANDOM_SEED);
@@ -49,8 +46,8 @@ int main() {
     float* dC{nullptr};
 
     for (size_t i = 0; i < hA.size(); ++i) {
-        hA[i] = 0.01;//dist(gen);
-        hB[i] = 0.02;//dist(gen);
+        hA[i] = dist(gen);
+        hB[i] = dist(gen);
     }
 
     std::vector<float> std_C;
@@ -118,7 +115,7 @@ int main() {
     std_E.resize(N2, 0.0f);
 
     for (size_t i = 0; i < hD.size(); ++i) {
-        hD[i] = 0.13;
+        hD[i] = dist(gen);
     }
 
     for (int i = 0; i < N; ++i) {

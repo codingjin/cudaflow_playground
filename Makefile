@@ -3,7 +3,7 @@ NVCC = nvcc
 CXXFLAGS = -std=c++17 -I taskflow/ --extended-lambda
 
 # Targets
-TARGETS = addmatmul cuda_add cuda_matmul
+TARGETS = addmatmul cuda_add cuda_matmul cudaflow_matmul_timing matmul_timing
 
 # Default target
 all: $(TARGETS)
@@ -17,6 +17,12 @@ cuda_add: cuda_add.cu
 
 cuda_matmul: cuda_matmul.cu
 	$(NVCC) $(CXXFLAGS) $< -o $@
+
+cudaflow_matmul_timing: cudaflow_matmul_timing.cu
+	$(NVCC) $(CXXFLAGS) $< -o $@
+
+matmul_timing: matmul_timing.cu
+	$(NVCC) -std=c++17 $< -o $@
 
 # Clean rule
 clean:
