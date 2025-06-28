@@ -23,9 +23,57 @@ __global__ void matmul(const float* A, const float* B, float* C, int M, int N, i
     }
 }
 
+__global__ void matmul0(const float* A, const float* B, float* C, int M, int N, int K) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    if (col < N && row < M) {
+        float tmp = 0.0f;
+        for (int i = 0; i < N; ++i) {
+            tmp += A[row * N + i] * B[i * K + col] + 1e-6;
+        }
+        C[row * K + col] = tmp;
+    }
+}
+
+__global__ void matmul1(const float* A, const float* B, float* C, int M, int N, int K) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    if (col < N && row < M) {
+        float tmp = 0.0f;
+        for (int i = 0; i < N; ++i) {
+            tmp += A[row * N + i] * B[i * K + col] + A[row * N + i];
+        }
+        C[row * K + col] = tmp;
+    }
+}
+
+__global__ void matmul2(const float* A, const float* B, float* C, int M, int N, int K) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    if (col < N && row < M) {
+        float tmp = 0.0f;
+        for (int i = 0; i < N; ++i) {
+            tmp += A[row * N + i] * B[i * K + col] + B[i * K + col];
+        }
+        C[row * K + col] = tmp;
+    }
+}
+
+__global__ void matmul3(const float* A, const float* B, float* C, int M, int N, int K) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    if (col < N && row < M) {
+        float tmp = 0.0f;
+        for (int i = 0; i < N; ++i) {
+            tmp += A[row * N + i] * B[i * K + col] + A[row * N + i] + B[i * K + col];
+        }
+        C[row * K + col] = tmp;
+    }
+}
+
 
 int main() {
-    const unsigned N = 2177;
+    const unsigned N = 128;
     const unsigned N2 = N*N;
     const unsigned RANDOM_SEED = 137;
     std::mt19937 gen(RANDOM_SEED);
@@ -60,29 +108,39 @@ int main() {
     dim3 grid((N + 31) / 32, (N + 31) / 32);
     dim3 block(32, 32);
 
-    // Timing for 10 rounds
-    for (int i = 0; i < 10; ++i) {
-        auto gbeg = std::chrono::steady_clock::now();
-        cudaMalloc(&da, N2*sizeof(float));
-        cudaMalloc(&db, N2*sizeof(float));
-        cudaMalloc(&dc, N2*sizeof(float));
+    cudaMalloc(&da, N2*sizeof(float));
+    cudaMalloc(&db, N2*sizeof(float));
+    cudaMalloc(&dc, N2*sizeof(float));
 
-        cudaMemcpy(da, &ha[0], ha.size() * sizeof(float), cudaMemcpyHostToDevice);
-        cudaMemcpy(db, &hb[0], hb.size() * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(da, &ha[0], ha.size() * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(db, &hb[0], hb.size() * sizeof(float), cudaMemcpyHostToDevice);
+    cudaDeviceSynchronize();
 
+    auto gbeg = std::chrono::steady_clock::now();
+    // Timing for 1000 rounds
+    for (int i = 0; i < 5000; ++i) {
+        matmul0<<<grid, block>>>(da, db, dc, N, N, N);
+        cudaDeviceSynchronize();
+        matmul1<<<grid, block>>>(da, db, dc, N, N, N);
+        cudaDeviceSynchronize();
+        matmul2<<<grid, block>>>(da, db, dc, N, N, N);
+        cudaDeviceSynchronize();
+        matmul3<<<grid, block>>>(da, db, dc, N, N, N);
+        cudaDeviceSynchronize();
         matmul<<<grid, block>>>(da, db, dc, N, N, N);
-        cudaMemcpy(&hc[0], dc, hc.size() * sizeof(float), cudaMemcpyDeviceToHost);
-        cudaThreadSynchronize();
-        cudaFree(da);
-        cudaFree(db);
-        cudaFree(dc);
-        auto gend = std::chrono::steady_clock::now();
-
-        std::cout << "Round " << i << " completed with " 
+        cudaDeviceSynchronize();
+    }
+    auto gend = std::chrono::steady_clock::now();
+    std::cout << " completed with " 
                 << std::chrono::duration_cast<std::chrono::milliseconds>(gend-gbeg).count()
                 << " ms\n";
-    }
-
+    
+    cudaMemcpy(&hc[0], dc, hc.size() * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cudaFree(da);
+    cudaFree(db);
+    cudaFree(dc);
+    
     
     
     std::cout << "Verifying results of Matmul C = A*B" << std::endl;
