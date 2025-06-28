@@ -60,6 +60,7 @@ int main() {
     dim3 grid((N + 31) / 32, (N + 31) / 32);
     dim3 block(32, 32);
 
+    // Timing for 10 rounds
     for (int i = 0; i < 10; ++i) {
         auto gbeg = std::chrono::steady_clock::now();
         cudaMalloc(&da, N2*sizeof(float));

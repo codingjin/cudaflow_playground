@@ -106,6 +106,7 @@ int main() {
     cudaFlow.succeed(allocate_a, allocate_b, allocate_c)
             .precede(freea, freeb, freec);
     
+    // Timing for 10 rounds
     for (int i = 0; i < 10; ++i) {
         auto gbeg = std::chrono::steady_clock::now();
         executor.run(taskflow).wait();
