@@ -24,7 +24,7 @@ __global__ void matmul(const float* A, const float* B, float* C, int M, int N, i
 
 
 int main() {
-    const unsigned N = 1137;
+    const unsigned N = 2177;
     const unsigned N2 = N*N;
     const unsigned RANDOM_SEED = 137;
     std::mt19937 gen(RANDOM_SEED);
@@ -117,6 +117,7 @@ int main() {
     }
     
     std::cout << "Verifying results of Matmul C = A*B" << std::endl;
+    std::cout << "Problem Size: M = N = K = " << N << std::endl;
     float maxerr = 0.0f;
     for (size_t i = 0; i < N2; ++i) {
         maxerr = std::max(maxerr, std::abs(hc[i] - result[i]));
